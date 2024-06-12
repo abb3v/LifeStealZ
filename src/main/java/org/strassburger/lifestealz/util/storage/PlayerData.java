@@ -12,6 +12,8 @@ public class PlayerData {
     private int craftedRevives = 0;
     private int hasbeenRevived = 0;
     private int killedOtherPlayers = 0;
+    private long banStartTime = 0;
+    private long banDuration = 0;
 
     public PlayerData(String name, UUID uuid) {
         this.name = name;
@@ -65,5 +67,21 @@ public class PlayerData {
 
     public void setKilledOtherPlayers(int killedOtherPlayers) {
         this.killedOtherPlayers = killedOtherPlayers;
+    }
+
+    public long getBanStartTime() {
+        return banStartTime;
+    }
+
+    public void setBanStartTime(long banStartTime) {
+        this.banStartTime = banStartTime;
+    }
+
+    public long getBanDuration() {
+        return banDuration;
+    }
+
+    public void setBanDuration(long banDuration) {
+        this.banDuration = banDuration;
     }
 }

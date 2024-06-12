@@ -26,7 +26,9 @@ public class MySQLPlayerDataStorage implements PlayerDataStorage {
                         "hasbeenRevived INT, " +
                         "craftedHearts INT, " +
                         "craftedRevives INT, " +
-                        "killedOtherPlayers INT)");
+                        "killedOtherPlayers INT, " +
+                        "banStartTime BIGINT, " +
+                        "banDuration BIGINT)");
             } catch (SQLException e) {
                 LifeStealZ.getInstance().getLogger().severe("Failed to initialize MySQL database: " + e.getMessage());
             }
@@ -57,10 +59,11 @@ public class MySQLPlayerDataStorage implements PlayerDataStorage {
         try (Connection connection = createConnection()) {
             if (connection == null) return;
             try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO hearts (uuid, name, maxhp, hasbeenRevived, craftedHearts, craftedRevives, killedOtherPlayers) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE " +
+                    "INSERT INTO hearts (uuid, name, maxhp, hasbeenRevived, craftedHearts, craftedRevives, killedOtherPlayers, banStartTime, banDuration) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE " +
                             "name = VALUES(name), maxhp = VALUES(maxhp), hasbeenRevived = VALUES(hasbeenRevived), " +
-                            "craftedHearts = VALUES(craftedHearts), craftedRevives = VALUES(craftedRevives), killedOtherPlayers = VALUES(killedOtherPlayers)")) {
+                            "craftedHearts = VALUES(craftedHearts), craftedRevives = VALUES(craftedRevives), killedOtherPlayers = VALUES(killedOtherPlayers), " +
+                            "banStartTime = VALUES(banStartTime), banDuration = VALUES(banDuration)")) {
                 statement.setString(1, playerData.getUuid().toString());
                 statement.setString(2, playerData.getName());
                 statement.setDouble(3, playerData.getMaxhp());
@@ -68,6 +71,8 @@ public class MySQLPlayerDataStorage implements PlayerDataStorage {
                 statement.setInt(5, playerData.getCraftedHearts());
                 statement.setInt(6, playerData.getCraftedRevives());
                 statement.setInt(7, playerData.getKilledOtherPlayers());
+                statement.setLong(8, playerData.getBanStartTime());
+                statement.setLong(9, playerData.getBanDuration());
                 statement.executeUpdate();
             } catch (SQLException e) {
                 LifeStealZ.getInstance().getLogger().severe("Failed to save player data to MySQL database: " + e.getMessage());
@@ -98,6 +103,8 @@ public class MySQLPlayerDataStorage implements PlayerDataStorage {
                     playerData.setCraftedHearts(resultSet.getInt("craftedHearts"));
                     playerData.setCraftedRevives(resultSet.getInt("craftedRevives"));
                     playerData.setKilledOtherPlayers(resultSet.getInt("killedOtherPlayers"));
+                    playerData.setBanStartTime(resultSet.getLong("banStartTime"));
+                    playerData.setBanDuration(resultSet.getLong("banDuration"));
 
                     return playerData;
                 } catch (SQLException e) {
