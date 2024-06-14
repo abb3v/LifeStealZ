@@ -44,7 +44,8 @@ public class WithdrawCommand implements CommandExecutor, TabCompleter {
         Player player = (Player) sender;
         PlayerData playerdata = LifeStealZ.getInstance().getPlayerDataStorage().load(player.getUniqueId());
 
-        boolean withdrawtoDeath = LifeStealZ.getInstance().getConfig().getBoolean("allowDyingFromWithdraw");
+        boolean allowDyingFromWithdraw = LifeStealZ.getInstance().getConfig().getBoolean("allowDyingFromWithdraw");
+        double minHearts = LifeStealZ.getInstance().getConfig().getDouble("minHearts") * 2;
 
         if (withdrawHearts < 1) {
             sender.sendMessage(MessageUtils.getAndFormatMsg(false, "messages.withdrawMin", "&cYou can't withdraw less than 1 heart!"));
@@ -71,34 +72,17 @@ public class WithdrawCommand implements CommandExecutor, TabCompleter {
             return false;
         }
 
-        if (playerdata.getMaxhp() - ((double) withdrawHearts * 2) <= 0.0) {
-            if (confirmOption == null || !confirmOption.equals("confirm")) {
-                sender.sendMessage(MessageUtils.getAndFormatMsg(false, "messages.noWithdraw", "&cYou would be eliminated if you withdraw a heart!"));
-                if (withdrawtoDeath) sender.sendMessage(MessageUtils.getAndFormatMsg(false, "messages.withdrawConfirmmsg", "&8&oUse <underlined><click:SUGGEST_COMMAND:/withdrawheart %amount% confirm>/withdrawheart %amount% confirm</click></underlined> if you really want to withdraw a heart", new Replaceable("%amount%", withdrawHearts + "")));
+        if (playerdata.getMaxhp() - ((double) withdrawHearts * 2) < minHearts) {
+            if (!allowDyingFromWithdraw) {
+                sender.sendMessage(MessageUtils.getAndFormatMsg(false, "messages.noWithdraw", "&cYou can't withdraw hearts as it would reduce your health below the minimum allowed!"));
                 return false;
+            } else {
+                if (confirmOption == null || !confirmOption.equals("confirm")) {
+                    sender.sendMessage(MessageUtils.getAndFormatMsg(false, "messages.noWithdraw", "&cWithdrawing this heart will reduce your health below the minimum allowed!"));
+                    sender.sendMessage(MessageUtils.getAndFormatMsg(false, "messages.withdrawConfirmmsg", "&8&oUse <underlined><click:SUGGEST_COMMAND:/withdrawheart %amount% confirm>/withdrawheart %amount% confirm</click></underlined> if you really want to withdraw a heart", new Replaceable("%amount%", withdrawHearts + "")));
+                    return false;
+                }
             }
-
-            if (!withdrawtoDeath) {
-                sender.sendMessage(MessageUtils.getAndFormatMsg(false, "messages.noWithdraw", "&cYou would be eliminated if you withdraw a heart!"));
-                return false;
-            }
-
-            for (int i = 0; i < playerdata.getMaxhp() / 2; i++) {
-                player.getInventory().addItem(CustomItemManager.createHeart());
-            }
-
-            playerdata.setMaxhp(0.0);
-            LifeStealZ.getInstance().getPlayerDataStorage().save(playerdata);
-
-            Component kickmsg = MessageUtils.getAndFormatMsg(false, "messages.eliminatedjoin", "&cYou don't have any hearts left!");
-            player.kick(kickmsg, PlayerKickEvent.Cause.BANNED);
-
-            if (LifeStealZ.getInstance().getConfig().getBoolean("announceElimination")) {
-                Component elimAnnouncementMsg = MessageUtils.getAndFormatMsg(true, "messages.eliminateionAnnouncementNature", "&c%player% &7has been eliminated!", new Replaceable("%player%", player.getName()));
-                Bukkit.broadcast(elimAnnouncementMsg);
-            }
-
-            return false;
         }
 
         playerdata.setMaxhp(playerdata.getMaxhp() - (double) withdrawHearts * 2);
@@ -110,7 +94,13 @@ public class WithdrawCommand implements CommandExecutor, TabCompleter {
             player.getInventory().addItem(CustomItemManager.createHeart());
         }
 
-        return false;
+        // Check if the player's health is below the minimum allowed and kick them if necessary
+        if (allowDyingFromWithdraw && playerdata.getMaxhp() <= minHearts) {
+            Component kickMessage = MessageUtils.getAndFormatMsg(false, "messages.eliminatedJoin", "&cYou don't have any hearts left!");
+            player.kick(kickMessage, PlayerKickEvent.Cause.PLUGIN);
+        }
+
+        return true;
     }
 
     @Override
