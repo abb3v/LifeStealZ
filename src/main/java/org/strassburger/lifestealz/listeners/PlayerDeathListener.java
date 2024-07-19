@@ -15,11 +15,15 @@ import org.strassburger.lifestealz.util.Replaceable;
 import org.strassburger.lifestealz.util.storage.PlayerData;
 import org.strassburger.lifestealz.util.worldguard.WorldGuardManager;
 
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.util.List;
 
 public class PlayerDeathListener implements Listener {
+
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
         final Player player = event.getEntity();
@@ -70,7 +74,7 @@ public class PlayerDeathListener implements Listener {
 
                 Bukkit.getScheduler().scheduleSyncDelayedTask(LifeStealZ.getInstance(), () -> {
                     Component kickMessage = MessageUtils.getAndFormatMsg(false, "messages.eliminatedjoin", "&cYou don't have any hearts left!");
-                    player.kick(kickMessage);
+                    handleDeath(player, null, kickMessage);
                 }, 1L);
 
                 if (announceElimination) {
@@ -150,7 +154,7 @@ public class PlayerDeathListener implements Listener {
 
                 Bukkit.getScheduler().scheduleSyncDelayedTask(LifeStealZ.getInstance(), () -> {
                     Component kickMessage = MessageUtils.getAndFormatMsg(false, "messages.eliminatedjoin", "&cYou don't have any hearts left!");
-                    player.kick(kickMessage);
+                    handleDeath(player, killer, kickMessage);
                 }, 1L);
 
                 if (announceElimination) {
@@ -167,10 +171,65 @@ public class PlayerDeathListener implements Listener {
         }
     }
 
+
     private String getPlayerIP(Player player) {
         InetSocketAddress inetSocketAddress = player.getAddress();
         if (inetSocketAddress == null) return null;
         InetAddress address = inetSocketAddress.getAddress();
         return address.getHostAddress();
+    }
+
+    private void handleDeath(Player player, Player killer, Component msg) {
+        player.kick(msg);
+        String webhookURL = LifeStealZ.getInstance().getConfig().getString("webhookURL");
+        String serverName = LifeStealZ.getInstance().getConfig().getString("webhookServerName");
+        if (!webhookURL.isEmpty()) {
+            try {
+                String killerName = killer != null ? killer.getName() : "natural";
+                sendDiscordWebhook(webhookURL, serverName, "Elimination!", player.getName() + " has been eliminated!", killerName, "https://mc-heads.net/head/" + player.getName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void sendDiscordWebhook(String webhookUrl, String serverName, String title, String description, String killer, String imageUrl) throws Exception {
+        URL url = new URL(webhookUrl);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json; utf-8");
+        conn.setRequestProperty("Accept", "application/json");
+        conn.setDoOutput(true);
+
+        String jsonPayload = createJsonPayload(serverName, title, description, killer, imageUrl);
+
+        try (OutputStream os = conn.getOutputStream()) {
+            byte[] input = jsonPayload.getBytes("utf-8");
+            os.write(input, 0, input.length);
+        }
+
+        int responseCode = conn.getResponseCode();
+        System.out.println("Response Code: " + responseCode);
+    }
+
+    public static String createJsonPayload(String serverName, String title, String description, String killer, String imageUrl) {
+        return "{"
+                + "\"embeds\": ["
+                + "{"
+                + "\"author\": {\"name\": \"" + serverName + "\"},"
+                + "\"title\": \"" + title + "\","
+                + "\"description\": \"" + description + "\","
+                + "\"color\": 16711680," // Red color in decimal
+                + "\"fields\": ["
+                + "{"
+                + "\"name\": \"Killer\","
+                + "\"value\": \"" + killer + "\","
+                + "\"inline\": true"
+                + "}"
+                + "],"
+                + "\"thumbnail\": {\"url\": \"" + imageUrl + "\"}"
+                + "}"
+                + "]"
+                + "}";
     }
 }

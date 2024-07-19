@@ -6,7 +6,11 @@
 
     <groupId>org.strassburger</groupId>
     <artifactId>LifeStealZ</artifactId>
+<<<<<<< Updated upstream
     <version>1.1.23</version>
+=======
+    <version>1.1.21-PATCHED</version>
+>>>>>>> Stashed changes
     <packaging>jar</packaging>
 
     <name>LifeStealZ</name>

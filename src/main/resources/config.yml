@@ -22,6 +22,10 @@ checkForUpdates: true
 #  | en-US | de-DE | es-ES | cs-CZ | vi-VN
 lang: "en-US"
 
+# === DISCORD ===
+webhookURL: ""
+webhookServerName: "Your Server"
+
 # === WORLD SETTINGS ===
 
 # A list of worlds, where the plugin should take effect.
