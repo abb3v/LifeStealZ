@@ -22,6 +22,7 @@ public class CommandManager {
         registerCommand("withdrawheart", new WithdrawCommand(plugin), new WithdrawCommand(plugin));
         registerCommand("revive", new ReviveCommand(plugin), new ReviveCommand(plugin));
         registerCommand("eliminate", new EliminateCommand(plugin), new EliminateCommand(plugin));
+        registerCommand("lzgui", new AdminGUICommand(plugin), new AdminGUICommand(plugin));
     }
 
     /**
