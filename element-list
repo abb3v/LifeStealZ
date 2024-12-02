@@ -1,6 +1,7 @@
 org.strassburger.lifestealz
 org.strassburger.lifestealz.api
 org.strassburger.lifestealz.commands
+org.strassburger.lifestealz.gui
 org.strassburger.lifestealz.listeners
 org.strassburger.lifestealz.util
 org.strassburger.lifestealz.util.customitems
